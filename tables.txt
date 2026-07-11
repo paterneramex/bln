@@ -1,0 +1,86 @@
+mysql> use bln;
+Database changed
+mysql> show tables;
++---------------+
+| Tables_in_bln |
++---------------+
+| customers     |
+| hbs           |
+| ipsups        |
+| pools         |
++---------------+
+4 rows in set (0.00 sec)
+
+mysql> describe customers;
++-------------------+-------------------+------+-----+---------+----------------+
+| Field             | Type              | Null | Key | Default | Extra          |
++-------------------+-------------------+------+-----+---------+----------------+
+| customer_name     | char(64)          | YES  | UNI | NULL    |                |
+| SRVnewIdent       | char(20)          | NO   | UNI | NULL    |                |
+| customer_prod     | char(50)          | YES  |     | NULL    |                |
+| customer_relais   | char(16)          | NO   |     | NULL    |                |
+| customer_mac_dhcp | char(14)          | NO   |     | NULL    |                |
+| customer_mac_arp  | char(14)          | NO   |     | NULL    |                |
+| customer_ip       | char(16)          | NO   | UNI | NULL    |                |
+| customer_mask     | char(2)           | NO   |     | 00      |                |
+| customer_pool     | char(3)           | NO   |     | 000     |                |
+| produit_level     | bigint            | NO   |     | 0       |                |
+| pool_code         | varchar(16)       | NO   |     |         |                |
+| customer_etat     | varchar(16)       | NO   |     |         |                |
+| customer_rmq      | varchar(254)      | NO   |     |         |                |
+| bw_out            | bigint unsigned   | NO   |     | 0       |                |
+| bw_in             | bigint unsigned   | NO   |     | 0       |                |
+| bw_rapport        | smallint unsigned | NO   |     | 1       |                |
+| customer_ap       | varchar(32)       | NO   |     | NULL    |                |
+| customer_provider | varchar(16)       | NO   |     | 0       |                |
+| id                | int               | NO   | PRI | NULL    | auto_increment |
++-------------------+-------------------+------+-----+---------+----------------+
+19 rows in set (0.00 sec)
+
+mysql> describe hbs;
++-------------+--------------+------+-----+---------+----------------+
+| Field       | Type         | Null | Key | Default | Extra          |
++-------------+--------------+------+-----+---------+----------------+
+| id          | int          | NO   | PRI | NULL    | auto_increment |
+| secteur_ip  | varchar(15)  | YES  |     | NULL    |                |
+| code_relais | varchar(15)  | YES  |     | NULL    |                |
+| nom_relai   | text         | NO   |     | NULL    |                |
+| ProductType | varchar(100) | YES  |     | NULL    |                |
+| upgraded    | tinyint(1)   | NO   |     | NULL    |                |
++-------------+--------------+------+-----+---------+----------------+
+6 rows in set (0.00 sec)
+
+mysql> describe ipsups;
++------------------+-------------+------+-----+-----------------+----------------+
+| Field            | Type        | Null | Key | Default         | Extra          |
++------------------+-------------+------+-----+-----------------+----------------+
+| id               | bigint      | NO   | PRI | NULL            | auto_increment |
+| ipsup_name       | varchar(64) | YES  |     | NULL            |                |
+| ipsup_dest       | varchar(15) | NO   |     | 000.000.000.000 |                |
+| ipsup_netw       | varchar(15) | NO   | MUL | 000.000.000.000 |                |
+| ipsup_mask_court | char(2)     | NO   |     | 00              |                |
+| ipsup_mask_long  | varchar(15) | NO   |     | 000.000.000.000 |                |
+| ipsup_relais     | varchar(16) | YES  |     | NULL            |                |
+| ipsup_wildcard   | varchar(15) | YES  |     | 0.0.0.0         |                |
++------------------+-------------+------+-----+-----------------+----------------+
+8 rows in set (0.00 sec)
+
+mysql> describe pools;
++-----------------+-------------+------+-----+-----------------+----------------+
+| Field           | Type        | Null | Key | Default         | Extra          |
++-----------------+-------------+------+-----+-----------------+----------------+
+| pool_code       | varchar(16) | YES  |     |                 |                |
+| pool_relais     | varchar(16) | NO   |     |                 |                |
+| pool_prod       | varchar(16) | NO   |     |                 |                |
+| pool_prod_name  | varchar(16) | NO   |     | NULL            |                |
+| pool_num        | char(2)     | NO   |     |                 |                |
+| pool_host       | varchar(15) | NO   |     | 000.000.000.000 |                |
+| pool_netw       | varchar(15) | NO   |     | 000.000.000.000 |                |
+| pool_gtw        | varchar(15) | NO   |     | 000.000.000.000 |                |
+| pool_mask_court | char(2)     | NO   |     | 00              |                |
+| pool_mask_long  | varchar(15) | NO   |     | 000.000.000.000 |                |
+| pool_deb        | varchar(15) | NO   |     | 000.000.000.000 |                |
+| pool_fin        | varchar(15) | NO   |     | 000.000.000.000 |                |
+| id              | int         | NO   | PRI | NULL            | auto_increment |
++-----------------+-------------+------+-----+-----------------+----------------+
+13 rows in set (0.00 sec)

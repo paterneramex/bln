@@ -13,7 +13,7 @@ class IpsupsSerializer(serializers.ModelSerializer):
 
 class PoolsSerializer(serializers.ModelSerializer):
 	class Meta:
-		model = Customers
+		model = Pools
 		fields = '__all__'
 
 class HbsSerializer(serializers.ModelSerializer):

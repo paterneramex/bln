@@ -135,3 +135,5 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Vite default development server port
     "http://localhost:3000",  # Create React App default port
 ]
+
+#CORS_ALLOW_CREDENTIALS = True
