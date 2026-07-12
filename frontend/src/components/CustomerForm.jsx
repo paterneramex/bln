@@ -1,0 +1,222 @@
+// src/components/CustomerForm.jsx
+import { useState } from 'react';
+import ValidatedField, { fieldIsValid } from './ValidatedField';
+import { padMaskForSubmit } from '../utils/validators';
+
+const FONT_STACK = "Calibri, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif";
+
+const EMPTY = {
+  srvnewident: '',
+  customer_name: '',
+  customer_prod: '',
+  customer_ip: '',
+  customer_relais: '',
+  customer_mac_dhcp: '',
+  customer_mac_arp: '', // auto-filled from customer_mac_dhcp, never edited directly
+  customer_mask: '',
+  produit_level: '0',
+  pool_code: 'DEFAULT',
+  customer_etat: 'ACTIVE',
+  customer_rmq: 'UI Provisioned',
+  bw_out: '0',
+  bw_in: '0',
+  bw_rapport: '1',
+  customer_ap: '',
+  customer_provider: '0',
+};
+
+// Field definitions: which existing rows / column to compare against for
+// the "already exists" checks. All keyed against dashboardData.customers,
+// which is already loaded by the dashboard on mount — no extra API round
+// trip needed for instant feedback.
+const FIELD_SPECS = [
+  { name: 'srvnewident', label: 'SRVnewIdent', type: 'text', required: true, checkDuplicate: true, duplicateField: 'srvnewident', placeholder: 'e.g. SRV2026_99' },
+  { name: 'customer_name', label: 'customer_name', type: 'text', required: true, checkDuplicate: true, duplicateField: 'customer_name', placeholder: 'Company Name Ltd' },
+  { name: 'customer_prod', label: 'customer_prod', type: 'text', required: false, placeholder: 'e.g. FIBER_10M' },
+  { name: 'customer_ip', label: 'customer_ip', type: 'ipv4', required: true, checkDuplicate: true, duplicateField: 'customer_ip', placeholder: '41.204.103.205' },
+  { name: 'customer_relais', label: 'customer_relais', type: 'text', required: true, placeholder: 'e.g. amp, tsiroa', helpText: 'Pré-rempli depuis pools.pool_relais selon le pool_code — modifiable' },
+  { name: 'customer_mac_dhcp', label: 'customer_mac_dhcp', type: 'mac', required: true, placeholder: 'c83a.4578.96f7' },
+  { name: 'customer_mask', label: 'customer_mask', type: 'mask', required: true, placeholder: '24', helpText: 'Between /8 and /32' },
+  { name: 'produit_level', label: 'produit_level', type: 'int', required: true, placeholder: '0' },
+  { name: 'pool_code', label: 'pool_code', type: 'ipv4', required: true, placeholder: 'DEFAULT' },
+  {
+    name: 'customer_etat',
+    label: 'State',
+    type: 'select',
+    required: true,
+    options: [
+      { value: 'ACTIVE', label: 'ACTIVE' },
+      { value: 'SUSPENDED', label: 'SUSPENDED' },
+      { value: 'INACTIVE', label: 'INACTIVE' },
+    ],
+  },
+  { name: 'customer_rmq', label: 'Remark', type: 'text', required: true, placeholder: 'Notes...' },
+  { name: 'bw_out', label: 'Bandwidth Out', type: 'int', required: true, placeholder: '0' },
+  { name: 'bw_in', label: 'Bandwidth In', type: 'int', required: true, placeholder: '0' },
+  { name: 'bw_rapport', label: 'Bandwidth Ratio', type: 'int', required: true, placeholder: '1' },
+  { name: 'customer_ap', label: 'Access Point', type: 'text', required: true, placeholder: 'AP identifier' },
+  { name: 'customer_provider', label: 'Provider', type: 'text', required: true, placeholder: '0' },
+];
+
+export default function CustomerForm({
+  onSubmit,
+  onCancel,
+  existingCustomers = [],
+  existingIpsups = [],
+  existingPools = [],
+  initialData = null,
+  mode = 'create',
+}) {
+  const [form, setForm] = useState(initialData ? { ...EMPTY, ...initialData } : EMPTY);
+  const currentId = mode === 'edit' && initialData ? initialData.id : null;
+
+  // customer_pool is never typed directly — it always mirrors
+  // pools.pool_num for whichever pools row matches this customer's
+  // pool_code (customers.pool_code = pools.pool_code). Recomputed from
+  // form.pool_code + the live pools list on every render, so it's
+  // never stale and never has to be reconciled with anything the user
+  // might otherwise type into it.
+  const matchingPool = existingPools.find(
+    (p) => String(p.pool_code).trim().toLowerCase() === String(form.pool_code).trim().toLowerCase()
+  );
+  const derivedCustomerPool = matchingPool ? String(matchingPool.pool_num) : '';
+  const poolCodeHasValue = String(form.pool_code || '').trim() !== '';
+
+  // customer_ip must not collide with an existing ipsups.ipsup_netw
+  // value either — same physical address can't simultaneously be a
+  // customer's assigned IP and a supervision network address.
+  const customerIpCrossChecks = [
+    {
+      existingList: existingIpsups,
+      duplicateField: 'ipsup_netw',
+      label: 'Cette adresse IP est déjà utilisée comme réseau IPSUP (ipsups.ipsup_netw)',
+    },
+  ];
+
+  const handleFieldChange = (name, formatted) => {
+    setForm((prev) => {
+      const next = { ...prev, [name]: formatted };
+      // Automation: customer_mac_arp always mirrors customer_mac_dhcp.
+      // Field is rendered disabled below, so this is the only way it's set.
+      if (name === 'customer_mac_dhcp') next.customer_mac_arp = formatted;
+
+      // Auto-suggestion (NOT a lock, unlike customer_pool above):
+      // customer_relais pre-fills from pools.pool_relais for whichever
+      // pools row matches the newly-typed pool_code, but the field stays
+      // editable — the user can still override it by hand afterward.
+      // Re-typing pool_code re-applies the suggestion.
+      if (name === 'pool_code') {
+        const match = existingPools.find(
+          (p) => String(p.pool_code).trim().toLowerCase() === String(formatted).trim().toLowerCase()
+        );
+        if (match && match.pool_relais != null && match.pool_relais !== '') {
+          next.customer_relais = String(match.pool_relais);
+        }
+      }
+
+      return next;
+    });
+  };
+
+  const allValid =
+    FIELD_SPECS.every((spec) =>
+      fieldIsValid({
+        value: form[spec.name],
+        type: spec.type,
+        required: spec.required,
+        checkDuplicate: spec.checkDuplicate,
+        existingList: existingCustomers,
+        duplicateField: spec.duplicateField,
+        currentId,
+        crossChecks: spec.name === 'customer_ip' ? customerIpCrossChecks : [],
+      })
+    ) && derivedCustomerPool !== '';
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!allValid) return;
+    const success = await onSubmit({
+      ...form,
+      customer_mask: padMaskForSubmit(form.customer_mask),
+      customer_pool: derivedCustomerPool,
+    });
+    // Only clear the form once the API confirms the record was saved —
+    // on any error, every typed value stays exactly as the user left it.
+    if (success && mode === 'create') setForm(EMPTY);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3" style={{ fontFamily: FONT_STACK }}>
+      {FIELD_SPECS.map((spec) => (
+        <ValidatedField
+          key={spec.name}
+          label={spec.label}
+          name={spec.name}
+          value={form[spec.name]}
+          onChange={handleFieldChange}
+          type={spec.type}
+          required={spec.required}
+          placeholder={spec.placeholder}
+          checkDuplicate={spec.checkDuplicate}
+          existingList={existingCustomers}
+          duplicateField={spec.duplicateField}
+          currentId={currentId}
+          helpText={spec.helpText}
+          options={spec.options}
+          crossChecks={spec.name === 'customer_ip' ? customerIpCrossChecks : []}
+        />
+      ))}
+
+      {/* Read-only mirror — automatically kept in sync with MAC (DHCP) */}
+      <ValidatedField
+        label="MAC (ARP) — auto-filled"
+        name="customer_mac_arp"
+        value={form.customer_mac_arp}
+        onChange={() => {}}
+        type="mac"
+        disabled
+        helpText="Automatically duplicated from MAC (DHCP)"
+      />
+
+      {/* Read-only mirror — derived from pools.pool_num for whichever
+          pools row matches this pool_code. Never typed by hand. */}
+      <div>
+        <label className="block text-xs font-semibold tracking-wide text-blue-800 uppercase">
+          customer_pool <span className="text-rose-500">*</span>
+        </label>
+        <input
+          type="text"
+          value={derivedCustomerPool}
+          disabled
+          className="w-full mt-1 bg-blue-50 border border-blue-200 rounded-md px-3 py-2 text-sm text-blue-950 shadow-sm opacity-70 cursor-not-allowed"
+        />
+        <p className={`mt-1 text-xs ${derivedCustomerPool ? 'text-emerald-600' : poolCodeHasValue ? 'text-rose-600' : 'text-blue-400'}`}>
+          {derivedCustomerPool
+            ? `Automatiquement dérivé de pools.pool_num (pool_code = ${form.pool_code})`
+            : poolCodeHasValue
+              ? `Aucun pool trouvé pour pool_code = ${form.pool_code}`
+              : 'Se remplira automatiquement une fois pool_code renseigné'}
+        </p>
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={!allValid}
+          className="flex-1 py-2.5 px-4 mt-2 rounded-lg bg-blue-700 hover:bg-blue-600 active:bg-blue-800 disabled:bg-blue-50 disabled:text-blue-300 disabled:cursor-not-allowed transition font-semibold text-sm text-white shadow-md cursor-pointer"
+        >
+          {mode === 'edit' ? 'Enregistrer les modifications' : 'Ajouter au registre actif'}
+        </button>
+        {mode === 'edit' && onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="py-2.5 px-4 mt-2 rounded-lg bg-blue-100 hover:bg-blue-200 transition font-semibold text-sm text-blue-800 cursor-pointer"
+          >
+            Annuler
+          </button>
+        )}
+      </div>
+    </form>
+  );
+}

@@ -192,7 +192,6 @@ function Dashboard() {
                   <CustomerForm
                     existingCustomers={dashboardData.customers}
                     existingIpsups={dashboardData.ipsups}
-                    existingPools={dashboardData.pools}
                     onSubmit={(payload) => createRecord('customers', payload)}
                   />
                 </div>
@@ -233,7 +232,6 @@ function Dashboard() {
           record={editingRecord.record}
           existingCustomers={dashboardData.customers}
           existingIpsups={dashboardData.ipsups}
-          existingPools={dashboardData.pools}
           onClose={() => setEditingRecord(null)}
           onSubmit={(payload) => updateRecord(editingRecord.table, editingRecord.record.id, payload)}
         />
