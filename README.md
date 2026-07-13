@@ -39,8 +39,6 @@ Application web développée avec **Django REST Framework** et **React (Vite)** 
 - React Router
 - Axios
 - Tailwind CSS
-- Leaflet
-- React Leaflet
 - xlsx
 
 ---
