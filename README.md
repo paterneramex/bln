@@ -1,42 +1,222 @@
-**BLN - IP & Product Management**
-echo # BLN - IP Address & Contract Management > README.md <br>
-echo .venv/ >> .gitignore<br>
-echo \__pycache__/ >> .gitignore<br>
-echo node_modules/ >> .gitignore<br>
-echo .env >> .gitignore<br>
-git add .<br>
-git commit -m "Initial commit: Repository setup"<br>
-git push -u origin main<br>
-<br>
-pip install django djangorestframework djangorestframework-simplejwt django-cors-headers python-dotenv mysqlclient<br>
-create database bln character set utf8 collate utf8_general_ci;<br>
-django-admin startproject core .<br>
-the . to tell don't create an extra root folder. Drop manage.py right here where I am
+# EDITBLN
 
-***create .env to secure db access update settings.py accordingly***
-<br>
-DEBUG=True<br>
-SECRET_KEY=your_secret_key<br>
-DB_NAME=bln<br>
-DB_USER=your_db_user<br>
-DB_PASSWORD=your_db_pwd<br>
-DB_HOST=something.mydomain.com<br>
-DB_PORT=3306<br>
+Application web développée avec **Django REST Framework** et **React (Vite)** permettant de consulter et d'interagir avec la base de données **DBDT**.
 
-***reverse engineering***
-python manage.py inspectdb<br>
+---
 
-class Customers(models.Model):<br>
-    id = models.IntegerField(primary_key=True)<br>
-    customer_name = models.CharField(unique=True, max_length=64, blank=True, null=True)<br>
-.<br>
-.<br>
-.<br>
-    class Meta:<br>
-        managed = False #so Django doesn't manage the db structure<br>
+# Architecture
 
+- **Backend** : Django + Django REST Framework
+- **Authentification** : JWT
+- **Frontend** : React (Vite) + Tailwind CSS
+- **Base de données** : MySQL
 
+> [!IMPORTANT]
+> Les modèles Django ont été générés par reverse engineering à l'aide de la commande :
+>
+> ```bash
+> python manage.py inspectdb
+> ```
+>
+> Les tables existantes de la base de données **ne doivent pas être modifiées** par Django.
 
+---
 
+# Technologies utilisées
 
+## Backend
 
+- Python 3.13
+- Django
+- Django REST Framework
+- JWT Authentication
+- MySQL
+
+## Frontend
+
+- React
+- Vite
+- React Router
+- Axios
+- Tailwind CSS
+- Leaflet
+- React Leaflet
+- xlsx
+
+---
+
+# Prérequis
+
+- Python 3.13
+- Node.js 24 ou supérieur
+- npm
+- MySQL
+
+---
+
+# Installation
+
+## 1. Cloner le dépôt
+
+```bash
+git clone https://github.com/paterneramex/bln.git
+cd bln
+```
+
+---
+
+# Backend
+
+Se placer dans le dossier du backend :
+
+```bash
+cd backend
+```
+
+## 1. Créer un environnement virtuel
+
+```bash
+python -m venv .venv
+```
+
+Activation :
+
+**Windows**
+
+```bash
+.venv\Scripts\activate
+```
+
+**Linux / macOS**
+
+```bash
+source .venv/bin/activate
+```
+
+---
+
+## 2. Installer les dépendances
+
+```bash
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+---
+
+## 3. Configurer le fichier `.env`
+
+Créer un fichier `.env` à côté du fichier `manage.py`.
+
+Générer une clé secrète :
+
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+Puis ajouter :
+
+```env
+DEBUG=True
+
+SECRET_KEY=votre_cle_generee
+
+DB_NAME=bln
+DB_USER=root
+DB_PASSWORD=123
+DB_HOST=localhost
+DB_PORT=3306
+```
+
+Adaptez les paramètres selon votre environnement.
+
+---
+
+## 4. Appliquer les migrations
+
+```bash
+python manage.py migrate
+```
+
+> Les migrations ne concernent que les modèles propres au projet. Les tables issues de `inspectdb` ne doivent pas être modifiées.
+
+---
+
+## 5. Créer un superutilisateur
+
+```bash
+python manage.py createsuperuser
+```
+
+---
+
+## 6. Lancer le serveur
+
+```bash
+python manage.py runserver
+```
+
+Le backend sera disponible à l'adresse :
+
+```
+http://localhost:8000
+```
+
+---
+
+# Frontend
+
+Se placer dans le dossier :
+
+```bash
+cd frontend
+```
+
+## 1. Installer les dépendances
+
+```bash
+npm install
+```
+
+---
+
+## 2. Configurer le fichier `.env`
+
+Créer un fichier `.env` dans le dossier `frontend` :
+
+```env
+VITE_API_URL=http://localhost:8000/api
+```
+
+---
+
+## 3. Lancer le serveur de développement
+
+```bash
+npm run dev
+```
+
+Le frontend sera disponible à l'adresse :
+
+```
+http://localhost:5173
+```
+
+---
+
+# Accès à l'application
+
+| Service | URL |
+|----------|-----|
+| Frontend | http://localhost:5173 |
+| API REST | http://localhost:8000/api |
+| Administration Django | http://localhost:8000/admin |
+
+---
+
+# Notes
+
+- Les modèles Django ont été générés avec `python manage.py inspectdb`.
+- Les tables existantes de la base MySQL ne doivent pas être modifiées.
+- Les migrations Django ne concernent que les nouveaux modèles créés dans le projet.
+- Le frontend communique avec le backend via l'API REST en utilisant Axios.
