@@ -54,7 +54,7 @@ Application web développée avec **Django REST Framework** et **React (Vite)** 
 
 # Installation
 
-## 1. Cloner le dépôt
+## 1. Cloner le dépôt ou tout de suite télécharger depuis bouton Code/Download ZIP 
 
 ```bash
 git clone https://github.com/paterneramex/bln.git
