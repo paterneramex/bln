@@ -18,7 +18,7 @@ Application web développée avec **Django REST Framework** et **React (Vite)** 
 > python manage.py inspectdb
 > ```
 >
-> Les tables existantes de la base de données **ne doivent pas être modifiées** par Django.
+> De ce fait, **ne modifie pas du tout** la structure de dbdt.
 
 ---
 
@@ -136,7 +136,7 @@ Adaptez les paramètres selon votre environnement.
 python manage.py migrate
 ```
 
-> Les migrations ne concernent que les modèles propres au projet. Les tables issues de `inspectdb` ne doivent pas être modifiées.
+> Les migrations ne concernent que les modèles propres à Django. Les tables issues de `inspectdb` ne subissent pas de modification.
 
 ---
 
