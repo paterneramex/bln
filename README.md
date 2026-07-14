@@ -112,7 +112,7 @@ Générer une clé secrète :
 python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
-Puis ajouter :
+Contenu du Fichier .env :
 
 ```env
 DEBUG=True
